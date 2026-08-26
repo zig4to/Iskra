@@ -180,6 +180,7 @@ button, input {
 
 .add-cat-form input {
   flex: 1;
+  min-width: 0;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
