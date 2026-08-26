@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="sl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iskra</title>
+  <meta name="description" content="Iskra — ideje in izboljšave, ki jih je treba dodati po aplikacijah. Kot issues, na enem mestu." />
+  <meta name="theme-color" content="#14100d" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Iskra" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <h1>Iskra</h1>
+        <p class="tag">Ideje in izboljšave za moje aplikacije</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Aplikacije"></nav>
+
+  <main class="panel">
+    <div class="panel-head">
+      <h2 id="panelTitle"></h2>
+      <a id="panelLink" class="open-link" href="#" target="_blank" rel="noopener">Odpri aplikacijo ↗</a>
+    </div>
+
+    <form class="add-cat-form" id="addCatForm">
+      <input id="addCatInput" placeholder="Nova kategorija…" autocomplete="off" />
+      <button type="submit">+ Kategorija</button>
+    </form>
+
+    <div class="categories" id="categories"></div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

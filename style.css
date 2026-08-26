@@ -1,0 +1,357 @@
+/* ================================================================
+   ISKRA — slog
+   ================================================================ */
+
+:root {
+  --bg:            #14100d;
+  --bg-tint:       #1a1310;
+  --card:          #1f1815;
+  --card-2:        #251c17;
+  --text:          #f3ede7;
+  --text-soft:     #b4a89c;
+  --line:          #2f2620;
+  --line-soft:     #26201b;
+  --accent:        #f59e0b;
+  --accent-2:      #ef4444;
+  --accent-soft:   #3a2416;
+  --danger:        #ef4444;
+  --shadow-sm:     0 1px 2px rgba(0,0,0,.35);
+  --shadow:        0 1px 2px rgba(0,0,0,.3), 0 10px 24px -10px rgba(0,0,0,.6);
+  --radius:        16px;
+  --radius-sm:     11px;
+  --gap:           12px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  background-image: radial-gradient(120% 60% at 50% 0%, var(--bg-tint) 0%, var(--bg) 60%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input {
+  font: inherit;
+  color: inherit;
+}
+
+/* ---------- Glava ---------- */
+.hero {
+  padding: 28px 20px 14px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-icon {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--accent) 70%, transparent);
+  color: #fff;
+}
+
+.brand-icon svg { width: 26px; height: 26px; }
+
+.brand-text h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #fff, #ffd9b0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-text .tag {
+  margin: 2px 0 0;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+/* ---------- Zavihki aplikacij ---------- */
+.tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 20px 18px;
+  max-width: 900px;
+  margin: 0 auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px 8px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+
+.tab:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.tab:active { transform: translateY(1px); }
+
+.tab-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(140deg, var(--tab-c1, var(--accent)), var(--tab-c2, var(--accent-2)));
+  flex: none;
+}
+.tab-icon svg { width: 16px; height: 16px; }
+
+.tab-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.tab.active {
+  background: var(--card-2);
+  border-color: color-mix(in srgb, var(--tab-c1, var(--accent)) 55%, var(--line));
+  box-shadow: 0 6px 18px -10px color-mix(in srgb, var(--tab-c1, var(--accent)) 70%, transparent);
+}
+.tab.active .tab-name { color: var(--text); }
+
+/* ---------- Glavni panel ---------- */
+.panel {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 4px 20px 60px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.open-link {
+  font-size: 13.5px;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.open-link:hover { text-decoration: underline; }
+
+/* ---------- Dodajanje kategorije ---------- */
+.add-cat-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.add-cat-form input {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  outline: none;
+}
+.add-cat-form input:focus { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+
+.add-cat-form button {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 15px;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.add-cat-form button:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+
+/* ---------- Kategorije ---------- */
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.empty-hint {
+  color: var(--text-soft);
+  font-size: 14px;
+  padding: 30px 4px;
+  text-align: center;
+}
+
+.cat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.cat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.cat-name {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+  padding: 4px 2px;
+  border-radius: 6px;
+}
+.cat-name:focus { background: var(--card-2); }
+
+.cat-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+  background: var(--card-2);
+  border-radius: 999px;
+  padding: 3px 9px;
+  flex: none;
+}
+
+.mini-btn {
+  flex: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-soft);
+  font-size: 15px;
+  padding: 6px;
+  border-radius: 8px;
+  line-height: 1;
+}
+.mini-btn:hover { background: var(--card-2); color: var(--danger); }
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.item:last-child { border-bottom: none; }
+
+.item-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.item-check input[type="checkbox"] {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.item-text {
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-size: 14.5px;
+}
+
+.item.done .item-text {
+  color: var(--danger);
+  text-decoration: line-through;
+  opacity: .8;
+}
+.item.done .item-check input[type="checkbox"] { accent-color: var(--danger); }
+
+.item-del {
+  flex: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-soft);
+  font-size: 15px;
+  padding: 6px;
+  border-radius: 8px;
+}
+.item-del:hover { background: var(--card-2); color: var(--danger); }
+
+.add-item-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px 14px;
+}
+
+.add-item-form input {
+  flex: 1;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  outline: none;
+  font-size: 14px;
+}
+.add-item-form input:focus { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+
+.add-item-form button {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 13px;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+}
+.add-item-form button:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+
+@media (max-width: 480px) {
+  .brand-text h1 { font-size: 26px; }
+  .tab-name { font-size: 13.5px; }
+}
