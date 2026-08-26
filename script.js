@@ -274,6 +274,32 @@ addCatForm.addEventListener("submit", (e) => {
   renderCategories();
 });
 
+// -------------------------------------------------------------- trd reset
+const hardResetBtn = document.getElementById("hardResetBtn");
+hardResetBtn.addEventListener("click", () => {
+  hardResetBtn.disabled = true;
+  hardResetBtn.classList.add("is-spinning");
+
+  const reloadFresh = () => {
+    const url = new URL(location.href);
+    url.searchParams.set("_r", Date.now());
+    location.replace(url.toString());
+  };
+
+  Promise.resolve()
+    .then(() => {
+      if (!("serviceWorker" in navigator)) return;
+      return navigator.serviceWorker.getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.unregister())));
+    })
+    .then(() => {
+      if (!("caches" in window)) return;
+      return caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
+    })
+    .catch((e) => console.warn("Trd reset ni v celoti uspel:", e))
+    .then(reloadFresh);
+});
+
 renderTabs();
 renderPanel();
 
