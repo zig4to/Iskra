@@ -12,6 +12,13 @@ const APPS = [
     icon: `<path d="M9 3.5h6A1.5 1.5 0 0 1 16.5 5v.5H18a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2h1.5V5A1.5 1.5 0 0 1 9 3.5Z"/><path d="m8.5 12.5 2 2 4-4.5"/><path d="M8.5 18h7"/>`
   },
   {
+    id: "kam",
+    name: "Kam",
+    url: "https://zig4to.github.io/Kam/",
+    accent: ["#38bdf8", "#0f766e"],
+    icon: `<path d="M4 17.5 L9 8 L12 12 L15 6 L20 17.5 Z"/><path d="M8.16 9.6 L9 8 L10.2 9.6 M14.2 7.6 L15 6 L15.7 7.6"/>`
+  },
+  {
     id: "komadi",
     name: "Komadi",
     url: "https://zig4to.github.io/Komadi/",
