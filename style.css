@@ -301,18 +301,13 @@ button, input {
 
 .cat-name {
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
   font-size: 15.5px;
   font-weight: 700;
   color: var(--text);
   min-width: 0;
   padding: 4px 2px;
-  border-radius: 6px;
-  cursor: text;
+  overflow-wrap: break-word;
 }
-.cat-name:focus { background: var(--card-2); }
 
 .cat-head-right {
   display: flex;
@@ -436,6 +431,7 @@ button, input {
   min-width: 0;
   cursor: pointer;
 }
+.item-check.editing { cursor: text; }
 
 .item-check input[type="checkbox"] {
   width: 19px;
@@ -449,6 +445,7 @@ button, input {
   min-width: 0;
   overflow-wrap: break-word;
   font-size: 14.5px;
+  cursor: text;
 }
 
 .item.done .item-text {
@@ -458,6 +455,18 @@ button, input {
 }
 .item.done .item-check input[type="checkbox"] { accent-color: var(--danger); }
 
+.item-text-edit {
+  flex: 1;
+  min-width: 0;
+  background: var(--card-2);
+  border: 1px solid color-mix(in srgb, var(--app-accent, var(--accent)) 50%, var(--line));
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 14.5px;
+  outline: none;
+}
+
+.item-copy,
 .item-del {
   flex: none;
   background: transparent;
@@ -468,6 +477,8 @@ button, input {
   padding: 6px;
   border-radius: 8px;
 }
+.item-copy:hover { background: var(--card-2); color: var(--app-accent, var(--accent)); }
+.item-copy.copied { color: #22c55e; }
 .item-del:hover { background: var(--card-2); color: var(--danger); }
 
 .add-item-form {

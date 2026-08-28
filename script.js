@@ -97,6 +97,24 @@ function touchLastSeen(id) {
   try { localStorage.setItem(LAST_SEEN_KEY, JSON.stringify(lastSeen)); } catch (e) { /* poln disk */ }
 }
 
+// Kateri zavihek je bil nazadnje odprt (= tisti, ki smo ga nazadnje urejali,
+// saj se ureja vedno znotraj trenutno odprtega zavihka) — po osvežitvi strani
+// se odpre isti, namesto da bi se vedno povrnil na prvega po abecedi.
+const ACTIVE_APP_KEY = "iskra-aktivna-app";
+
+function loadActiveApp() {
+  try {
+    const id = localStorage.getItem(ACTIVE_APP_KEY);
+    return (id && getApp(id)) ? id : APPS[0].id;
+  } catch (e) {
+    return APPS[0].id;
+  }
+}
+
+function persistActiveApp(id) {
+  try { localStorage.setItem(ACTIVE_APP_KEY, id); } catch (e) { /* poln disk */ }
+}
+
 function defaultData() {
   const data = {};
   APPS.forEach((app) => {
@@ -132,10 +150,33 @@ function saveData() {
 }
 
 let data = loadData();
-let activeApp = APPS[0].id;
+let activeApp = loadActiveApp();
 let activeTab = {}; // catId -> id iz PRIORITETE; ni shranjeno, samo za to sejo
 let collapsedCats = {}; // catId -> bool (zložena kategorija); ni shranjeno, samo za to sejo
 let lastSeen = loadLastSeen(); // appId -> Date.now() ob zadnjem odpiranju zavihka
+let editingItem = null; // id stvari, ki se trenutno ureja (klik na besedilo); ni shranjeno
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+// Za brskalnike/ne-varne izvore (npr. testiranje prek LAN IP), kjer
+// navigator.clipboard ni na voljo.
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) { /* nič */ }
+  document.body.removeChild(ta);
+}
 
 const tabsEl = document.getElementById("tabs");
 const categoriesEl = document.getElementById("categories");
@@ -186,6 +227,7 @@ function renderTabs() {
 function selectApp(id) {
   activeApp = id;
   touchLastSeen(id);
+  persistActiveApp(id);
   renderTabs();
   renderPanel();
 }
@@ -248,14 +290,11 @@ function renderCategories() {
     foldBtn.title = isCollapsed ? "Razpri kategorijo" : "Zloži kategorijo";
     foldBtn.appendChild(svgEl(`<path d="m6 9 6 6 6-6"/>`));
 
-    const nameInput = document.createElement("input");
-    nameInput.className = "cat-name";
-    nameInput.value = cat.name;
-    nameInput.addEventListener("click", (e) => e.stopPropagation());
-    nameInput.addEventListener("change", () => {
-      cat.name = nameInput.value.trim() || cat.name;
-      saveData();
-    });
+    // Ni več urejljiv vnos — samo naslov, klik nanj zloži/razpre kategorijo
+    // (bubbla do head, glej spodaj), kot vsak drug klik na glavo.
+    const nameEl = document.createElement("span");
+    nameEl.className = "cat-name";
+    nameEl.textContent = cat.name;
 
     const doneCount = cat.items.filter((i) => i.done).length;
     const count = document.createElement("span");
@@ -324,7 +363,7 @@ function renderCategories() {
     });
 
     head.appendChild(foldBtn);
-    head.appendChild(nameInput);
+    head.appendChild(nameEl);
     head.appendChild(prioRow);
     head.appendChild(headRight);
     section.appendChild(head);
@@ -341,8 +380,14 @@ function renderCategories() {
           const li = document.createElement("li");
           li.className = "item" + (item.done ? " done" : "");
 
-          const label = document.createElement("label");
-          label.className = "item-check";
+          const editing = editingItem === item.id;
+
+          // Ko urejamo besedilo, je ovojnica <div> namesto <label> — <label>
+          // okrog checkboxa bi klik kamorkoli (tudi v vnosno polje) preusmeril
+          // nanj, poleg tega bi bila z dvema vnosnima elementoma (checkbox +
+          // input) v istem <label> povezava dvoumna.
+          const label = document.createElement(editing ? "div" : "label");
+          label.className = "item-check" + (editing ? " editing" : "");
 
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
@@ -353,12 +398,56 @@ function renderCategories() {
             renderCategories();
           });
 
-          const text = document.createElement("span");
-          text.className = "item-text";
-          text.textContent = item.text;
-
           label.appendChild(checkbox);
-          label.appendChild(text);
+
+          if (editing) {
+            const editInput = document.createElement("input");
+            editInput.className = "item-text-edit";
+            editInput.value = item.text;
+            editInput.addEventListener("click", (e) => e.stopPropagation());
+            const commit = () => {
+              const v = editInput.value.trim();
+              if (v) item.text = v;
+              editingItem = null;
+              saveData();
+              renderCategories();
+            };
+            editInput.addEventListener("blur", commit);
+            editInput.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") { e.preventDefault(); editInput.blur(); }
+              else if (e.key === "Escape") { editingItem = null; renderCategories(); }
+            });
+            label.appendChild(editInput);
+          } else {
+            const text = document.createElement("span");
+            text.className = "item-text";
+            text.textContent = item.text;
+            // preventDefault: brez tega bi klik na besedilo (znotraj <label>)
+            // po privzetem obnašanju sprožil tudi checkbox, kot da smo
+            // kliknili nanj — želimo samo urejanje, kljukica naj se preklaplja
+            // izključno s klikom neposredno na checkbox.
+            text.addEventListener("click", (e) => {
+              e.preventDefault();
+              editingItem = item.id;
+              renderCategories();
+            });
+            label.appendChild(text);
+          }
+
+          const copyBtn = document.createElement("button");
+          copyBtn.className = "item-copy";
+          copyBtn.type = "button";
+          copyBtn.title = "Kopiraj";
+          copyBtn.textContent = "📋";
+          copyBtn.addEventListener("click", () => {
+            copyText(item.text);
+            copyBtn.classList.add("copied");
+            copyBtn.title = "Kopirano!";
+            setTimeout(() => {
+              copyBtn.classList.remove("copied");
+              copyBtn.title = "Kopiraj";
+            }, 1000);
+          });
 
           const del = document.createElement("button");
           del.className = "item-del";
@@ -372,6 +461,7 @@ function renderCategories() {
           });
 
           li.appendChild(label);
+          li.appendChild(copyBtn);
           li.appendChild(del);
           ul.appendChild(li);
         });
@@ -413,6 +503,13 @@ function renderCategories() {
 
     categoriesEl.appendChild(section);
   });
+
+  // Fokus na vnosno polje za urejanje besedila šele zdaj — prej element še
+  // ni bil del dokumenta (focus() na odklopljenem elementu ne naredi nič).
+  if (editingItem) {
+    const editEl = categoriesEl.querySelector(".item-text-edit");
+    if (editEl) { editEl.focus(); editEl.select(); }
+  }
 }
 
 addCatForm.addEventListener("submit", (e) => {
