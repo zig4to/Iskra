@@ -45,6 +45,13 @@ const APPS = [
     url: "https://zig4to.github.io/TomsStudios/",
     accent: ["#0ea5e9", "#6366f1"],
     icon: `<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>`
+  },
+  {
+    id: "zdrav",
+    name: "Zdrav",
+    url: "https://zig4to.github.io/Zdrav/",
+    accent: ["#22c55e", "#16a34a"],
+    icon: `<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>`
   }
 ];
 
@@ -486,8 +493,8 @@ function renderCategories() {
       addBtn.type = "submit";
       addBtn.textContent = "+";
 
-      addForm.appendChild(addInput);
       addForm.appendChild(addBtn);
+      addForm.appendChild(addInput);
       addForm.addEventListener("submit", (e) => {
         e.preventDefault();
         const text = addInput.value.trim();
@@ -590,7 +597,10 @@ if (window.Sync) {
   Sync.syncNow();
 }
 
-if ("serviceWorker" in navigator) {
+// Service worker samo v produkciji — na localhost bi cache-first serviranje
+// oviralo live reload med razvojem.
+const isLocalhost = ["localhost", "127.0.0.1", ""].includes(location.hostname);
+if ("serviceWorker" in navigator && !isLocalhost) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
