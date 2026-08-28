@@ -1,8 +1,8 @@
 /* Predpomnilnik lupine aplikacije, da deluje tudi brez povezave.
    Ob spremembi datotek povečaj VERSION. */
-var VERSION = 'iskra-v4';
+var VERSION = 'iskra-v7';
 var SHELL = [
-  './', './index.html', './style.css', './script.js', './icon.svg', './manifest.json',
+  './', './index.html', './style.css', './script.js', './sync.js', './icon.svg', './manifest.json',
   './icons/icon-192.png', './icons/icon-512.png',
   './icons/icon-maskable-192.png', './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png'

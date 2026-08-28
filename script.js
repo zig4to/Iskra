@@ -48,6 +48,35 @@ const APPS = [
   }
 ];
 
+// Zavihki po nujnosti znotraj vsake kategorije, v vsaki aplikaciji — enaki
+// povsod, niso vezani na APPS. "splosno" je privzeta vrednost za stvari, ki
+// (še) nimajo prioriteta.prioriteta nastavljene (obstoječi zapisi izpred te
+// funkcije), da se ob nadgradnji nič ne "izgubi" v prazen zavihek.
+const PRIORITETE = [
+  {
+    id: "nujno",
+    name: "Nujno",
+    accent: "#ef4444",
+    icon: `<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>`
+  },
+  {
+    id: "splosno",
+    name: "Splošno",
+    accent: "#f59e0b",
+    icon: `<path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/>`
+  },
+  {
+    id: "mogoce",
+    name: "Mogoče",
+    accent: "#64748b",
+    icon: `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>`
+  }
+];
+
+function prioritetaOf(item) {
+  return item.prioriteta || "splosno";
+}
+
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
@@ -60,15 +89,21 @@ function defaultData() {
   return data;
 }
 
+// Doda manjkajoče zavihke (npr. na novo dodano aplikacijo v APPS), ne glede
+// na to, ali `parsed` prihaja iz localStorage ali iz oblaka — oboje gre skozi
+// isto pot, da se struktura ne razhaja.
+function healData(parsed) {
+  APPS.forEach((app) => {
+    if (!Array.isArray(parsed[app.id])) parsed[app.id] = [{ id: uid(), name: "Ideje", items: [] }];
+  });
+  return parsed;
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultData();
-    const parsed = JSON.parse(raw);
-    APPS.forEach((app) => {
-      if (!Array.isArray(parsed[app.id])) parsed[app.id] = [{ id: uid(), name: "Ideje", items: [] }];
-    });
-    return parsed;
+    return healData(JSON.parse(raw));
   } catch (e) {
     return defaultData();
   }
@@ -76,10 +111,14 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  // Sync ni naložen v testnem/offline okolju brez tega — glej sync.js.
+  if (window.Sync) Sync.afterSave();
 }
 
 let data = loadData();
 let activeApp = APPS[0].id;
+let activeTab = {}; // catId -> id iz PRIORITETE; ni shranjeno, samo za to sejo
+let collapsedCats = {}; // catId -> bool (zložena kategorija); ni shranjeno, samo za to sejo
 
 const tabsEl = document.getElementById("tabs");
 const categoriesEl = document.getElementById("categories");
@@ -162,14 +201,32 @@ function renderCategories() {
   cats.forEach((cat) => {
     const section = document.createElement("section");
     section.className = "cat";
+    const isCollapsed = !!collapsedCats[cat.id];
+    if (isCollapsed) section.classList.add("is-collapsed");
 
     // ---- glava kategorije ----
+    // Klik kamorkoli na glavo zloži/razpre kategorijo — razen na elemente, ki
+    // imajo svoj pomen (ime, zavihki nujnosti, brisanje): ti klic ustavijo z
+    // e.stopPropagation(), da se ne zloži kategorija, ko npr. samo preklopiš
+    // zavihek. Gumb za zlaganje (foldBtn) svojega poslušalca nima namerno —
+    // njegov klik se preprosto dvigne do glave in izkoristi isto logiko.
     const head = document.createElement("div");
     head.className = "cat-head";
+    head.addEventListener("click", () => {
+      collapsedCats[cat.id] = !collapsedCats[cat.id];
+      renderCategories();
+    });
+
+    const foldBtn = document.createElement("button");
+    foldBtn.className = "fold-btn";
+    foldBtn.type = "button";
+    foldBtn.title = isCollapsed ? "Razpri kategorijo" : "Zloži kategorijo";
+    foldBtn.appendChild(svgEl(`<path d="m6 9 6 6 6-6"/>`));
 
     const nameInput = document.createElement("input");
     nameInput.className = "cat-name";
     nameInput.value = cat.name;
+    nameInput.addEventListener("click", (e) => e.stopPropagation());
     nameInput.addEventListener("change", () => {
       cat.name = nameInput.value.trim() || cat.name;
       saveData();
@@ -185,88 +242,150 @@ function renderCategories() {
     delBtn.type = "button";
     delBtn.title = "Izbriši kategorijo";
     delBtn.textContent = "🗑";
-    delBtn.addEventListener("click", () => {
+    delBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       if (cat.items.length && !confirm(`Izbrišem kategorijo "${cat.name}" z vsemi stvarmi?`)) return;
       data[activeApp] = data[activeApp].filter((c) => c.id !== cat.id);
       saveData();
       renderCategories();
     });
 
+    const headRight = document.createElement("div");
+    headRight.className = "cat-head-right";
+    headRight.appendChild(count);
+    headRight.appendChild(delBtn);
+
+    // ---- zavihki po nujnosti (nujno / splošno / mogoče) ----
+    // Del iste glave (ne ločena vrstica) — na namizju pristanejo sredinsko
+    // med imenom in števcem/brisanjem, na mobilnem pa se z `order`/
+    // `flex-basis` prelomijo pod prvo vrstico, levo poravnani (glej CSS).
+    const prioRow = document.createElement("div");
+    prioRow.className = "prio-tabs";
+    const active = activeTab[cat.id] || "splosno";
+
+    PRIORITETE.forEach((p) => {
+      const n = cat.items.filter((i) => prioritetaOf(i) === p.id).length;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "prio-tab" + (p.id === active ? " active" : "");
+      btn.style.setProperty("--prio-c", p.accent);
+
+      const ic = document.createElement("span");
+      ic.className = "prio-tab-icon";
+      ic.appendChild(svgEl(p.icon));
+
+      const lbl = document.createElement("span");
+      lbl.className = "prio-tab-name";
+      lbl.textContent = p.name;
+
+      btn.appendChild(ic);
+      btn.appendChild(lbl);
+
+      if (n) {
+        const badge = document.createElement("span");
+        badge.className = "prio-tab-count";
+        badge.textContent = n;
+        btn.appendChild(badge);
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        activeTab[cat.id] = p.id;
+        renderCategories();
+      });
+
+      prioRow.appendChild(btn);
+    });
+
+    head.appendChild(foldBtn);
     head.appendChild(nameInput);
-    head.appendChild(count);
-    head.appendChild(delBtn);
+    head.appendChild(prioRow);
+    head.appendChild(headRight);
     section.appendChild(head);
 
-    // ---- seznam stvari ----
-    const ul = document.createElement("ul");
-    ul.className = "items";
+    if (!isCollapsed) {
+      // ---- seznam stvari (samo za izbrani zavihek nujnosti) ----
+      const shown = cat.items.filter((i) => prioritetaOf(i) === active);
 
-    sortedItems(cat.items).forEach((item) => {
-      const li = document.createElement("li");
-      li.className = "item" + (item.done ? " done" : "");
+      if (shown.length) {
+        const ul = document.createElement("ul");
+        ul.className = "items";
 
-      const label = document.createElement("label");
-      label.className = "item-check";
+        sortedItems(shown).forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "item" + (item.done ? " done" : "");
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = item.done;
-      checkbox.addEventListener("change", () => {
-        item.done = checkbox.checked;
+          const label = document.createElement("label");
+          label.className = "item-check";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = item.done;
+          checkbox.addEventListener("change", () => {
+            item.done = checkbox.checked;
+            saveData();
+            renderCategories();
+          });
+
+          const text = document.createElement("span");
+          text.className = "item-text";
+          text.textContent = item.text;
+
+          label.appendChild(checkbox);
+          label.appendChild(text);
+
+          const del = document.createElement("button");
+          del.className = "item-del";
+          del.type = "button";
+          del.title = "Izbriši";
+          del.textContent = "✕";
+          del.addEventListener("click", () => {
+            cat.items = cat.items.filter((i) => i.id !== item.id);
+            saveData();
+            renderCategories();
+          });
+
+          li.appendChild(label);
+          li.appendChild(del);
+          ul.appendChild(li);
+        });
+
+        section.appendChild(ul);
+      } else {
+        const hint = document.createElement("p");
+        hint.className = "prio-empty-hint";
+        hint.textContent = "Tukaj še ni ničesar.";
+        section.appendChild(hint);
+      }
+
+      // ---- dodajanje stvari (gre v trenutno izbrani zavihek nujnosti) ----
+      const addForm = document.createElement("form");
+      addForm.className = "add-item-form";
+
+      const addInput = document.createElement("input");
+      addInput.placeholder = "Dodaj funkcijo / izboljšavo…";
+      addInput.autocomplete = "off";
+
+      const addBtn = document.createElement("button");
+      addBtn.type = "submit";
+      addBtn.textContent = "+";
+
+      addForm.appendChild(addInput);
+      addForm.appendChild(addBtn);
+      addForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = addInput.value.trim();
+        if (!text) return;
+        cat.items.push({ id: uid(), text, done: false, prioriteta: active });
         saveData();
+        addInput.value = "";
         renderCategories();
       });
 
-      const text = document.createElement("span");
-      text.className = "item-text";
-      text.textContent = item.text;
+      section.appendChild(addForm);
+    }
 
-      label.appendChild(checkbox);
-      label.appendChild(text);
-
-      const del = document.createElement("button");
-      del.className = "item-del";
-      del.type = "button";
-      del.title = "Izbriši";
-      del.textContent = "✕";
-      del.addEventListener("click", () => {
-        cat.items = cat.items.filter((i) => i.id !== item.id);
-        saveData();
-        renderCategories();
-      });
-
-      li.appendChild(label);
-      li.appendChild(del);
-      ul.appendChild(li);
-    });
-
-    section.appendChild(ul);
-
-    // ---- dodajanje stvari ----
-    const addForm = document.createElement("form");
-    addForm.className = "add-item-form";
-
-    const addInput = document.createElement("input");
-    addInput.placeholder = "Dodaj funkcijo / izboljšavo…";
-    addInput.autocomplete = "off";
-
-    const addBtn = document.createElement("button");
-    addBtn.type = "submit";
-    addBtn.textContent = "+";
-
-    addForm.appendChild(addInput);
-    addForm.appendChild(addBtn);
-    addForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const text = addInput.value.trim();
-      if (!text) return;
-      cat.items.push({ id: uid(), text, done: false });
-      saveData();
-      addInput.value = "";
-      renderCategories();
-    });
-
-    section.appendChild(addForm);
     categoriesEl.appendChild(section);
   });
 }
@@ -309,6 +428,45 @@ hardResetBtn.addEventListener("click", () => {
 
 renderTabs();
 renderPanel();
+
+// -------------------------------------------------------------------- sync
+const syncBtn = document.getElementById("syncBtn");
+
+if (window.Sync) {
+  Sync.getLocalData = () => data;
+
+  // Prazno = vsaka aplikacija ima kvečjemu privzeto kategorijo "Ideje" brez
+  // stvari — torej stanje, kakršno da defaultData()/seed v schema.sql, ne
+  // nekaj, kar je uporabnik dejansko vnesel. Glej firstSync() v sync.js.
+  Sync.isEmpty = (remote) => {
+    const healed = healData(JSON.parse(JSON.stringify(remote || {})));
+    return APPS.every((app) => {
+      const cats = healed[app.id];
+      return cats.length === 1 && cats[0].items.length === 0;
+    });
+  };
+
+  Sync.onRemoteData = (remote) => {
+    data = healData(remote || {});
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderPanel();
+  };
+
+  Sync.onStatus = (text, busy, kind) => {
+    if (!syncBtn) return;
+    syncBtn.title = text;
+    syncBtn.classList.toggle("is-spinning", busy);
+    syncBtn.classList.toggle("is-error", kind === "error");
+  };
+
+  if (syncBtn) {
+    syncBtn.addEventListener("click", () => Sync.syncNow());
+  }
+
+  // Zgornji render je že iz localStorage — uporabnik ne čaka nanj. Ta klic
+  // v ozadju preveri, ali je v oblaku kaj novejšega (npr. z druge naprave).
+  Sync.syncNow();
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

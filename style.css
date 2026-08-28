@@ -68,6 +68,28 @@ button, input {
   to { transform: rotate(360deg); }
 }
 
+/* ---------- Sinhronizacija ---------- */
+.sync-btn {
+  position: fixed;
+  top: 14px;
+  right: 56px;
+  z-index: 40;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.sync-btn svg { width: 17px; height: 17px; }
+.sync-btn:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.sync-btn.is-spinning svg { animation: hard-reset-spin .9s linear infinite; }
+.sync-btn.is-error { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+
 /* ---------- Glava ---------- */
 .hero {
   padding: 28px 20px 14px;
@@ -251,10 +273,31 @@ button, input {
 .cat-head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  padding: 12px 12px 12px 16px;
+  padding: 12px;
   border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
 }
+.cat.is-collapsed .cat-head { border-bottom-color: transparent; }
+
+.fold-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.fold-btn:hover { background: var(--card-2); color: var(--text); }
+.fold-btn svg { width: 16px; height: 16px; transition: transform .15s; }
+.cat.is-collapsed .fold-btn svg { transform: rotate(-90deg); }
 
 .cat-name {
   flex: 1;
@@ -267,8 +310,20 @@ button, input {
   min-width: 0;
   padding: 4px 2px;
   border-radius: 6px;
+  cursor: text;
 }
 .cat-name:focus { background: var(--card-2); }
+
+.cat-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+@media (min-width: 620px) {
+  .cat-head-right { flex: 1; justify-content: flex-end; }
+}
 
 .cat-count {
   font-size: 12px;
@@ -292,6 +347,71 @@ button, input {
   line-height: 1;
 }
 .mini-btn:hover { background: var(--card-2); color: var(--danger); }
+
+/* ---------- Zavihki po nujnosti (nujno / splošno / mogoče) ---------- */
+/* Del .cat-head (glej script.js) — na mobilnem `order`/`flex-basis: 100%`
+   prelomita zavihke pod ime/števec/brisanje, levo poravnano (kot pred to
+   spremembo, samo drug rob). Na namizju gre red nazaj na naravni vrstni red
+   (ime, zavihki, števec+brisanje) in `margin: 0 auto` jih med enako širokima
+   .cat-name in .cat-head-right (obe flex:1 čez ta preboj) sredinsko poravna. */
+.prio-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  order: 3;
+  flex-basis: 100%;
+  justify-content: flex-start;
+}
+
+@media (min-width: 620px) {
+  .prio-tabs { order: 0; flex-basis: auto; margin: 0 auto; }
+}
+
+.prio-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.prio-tab:hover { border-color: color-mix(in srgb, var(--prio-c, var(--accent)) 45%, var(--line)); }
+
+.prio-tab-icon {
+  display: flex;
+  color: var(--prio-c, var(--accent));
+}
+.prio-tab-icon svg { width: 13px; height: 13px; }
+
+.prio-tab-count {
+  background: var(--card-2);
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.prio-tab.active {
+  background: color-mix(in srgb, var(--prio-c, var(--accent)) 16%, var(--card-2));
+  border-color: color-mix(in srgb, var(--prio-c, var(--accent)) 55%, var(--line));
+  color: var(--text);
+}
+.prio-tab.active .prio-tab-count {
+  background: color-mix(in srgb, var(--prio-c, var(--accent)) 30%, var(--card-2));
+}
+
+.prio-empty-hint {
+  margin: 0;
+  padding: 10px 16px 18px;
+  color: var(--text-soft);
+  font-size: 13px;
+}
 
 .items {
   list-style: none;

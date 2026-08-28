@@ -4,7 +4,9 @@ Beležka funkcij in izboljšav, ki jih je treba dodati po mojih aplikacijah — 
 a vse na enem mestu. Vsaka aplikacija ima svoje zavihek s kategorijami, vsaka kategorija
 pa svoj checklist. Ko stvar odkljukaš, obarva rdeče in se premakne na dno seznama.
 
-Brez strežnika — vsi podatki so shranjeni lokalno v brskalniku (`localStorage`).
+Podatki živijo lokalno v brskalniku (`localStorage`) in delujejo brez povezave; poleg tega
+se v ozadju zrcalijo v Supabase (ena skupna tabela, brez prijave — glej `supabase/schema.sql`),
+da se isti seznam vidi na vseh napravah.
 
 ## Zagon
 
@@ -21,6 +23,7 @@ Odpre statični strežnik na `:8080`. Ni build koraka, ni odvisnosti.
 | `index.html`          | Naslov, zavihki aplikacij, glavni panel          |
 | `style.css`           | Temna tema (barve iskre — jantar/rdeča)          |
 | `script.js`           | Podatki, izris zavihkov/kategorij/kljukic        |
+| `sync.js`              | Sinhronizacija s Supabase (brez prijave)         |
 | `manifest.json`       | Podatki za namestitev (ime, ikone, barve)        |
 | `sw.js`               | Service worker — namestljivost in delo brez neta |
 | `icon.svg`            | Izvorna risba ikone (blisk)                      |
