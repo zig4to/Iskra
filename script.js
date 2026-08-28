@@ -81,6 +81,22 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+// Kdaj je bila katera aplikacija nazadnje odprta — samo za razvrstitev
+// zavihkov (renderTabs), ni del data/sync. Aplikacija brez zapisa (še nikoli
+// odprta v tem brskalniku) šteje kot najstarejša (0) in pristane skrajno
+// desno.
+const LAST_SEEN_KEY = "iskra-zadnji-ogled";
+
+function loadLastSeen() {
+  try { return JSON.parse(localStorage.getItem(LAST_SEEN_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+
+function touchLastSeen(id) {
+  lastSeen[id] = Date.now();
+  try { localStorage.setItem(LAST_SEEN_KEY, JSON.stringify(lastSeen)); } catch (e) { /* poln disk */ }
+}
+
 function defaultData() {
   const data = {};
   APPS.forEach((app) => {
@@ -119,6 +135,7 @@ let data = loadData();
 let activeApp = APPS[0].id;
 let activeTab = {}; // catId -> id iz PRIORITETE; ni shranjeno, samo za to sejo
 let collapsedCats = {}; // catId -> bool (zložena kategorija); ni shranjeno, samo za to sejo
+let lastSeen = loadLastSeen(); // appId -> Date.now() ob zadnjem odpiranju zavihka
 
 const tabsEl = document.getElementById("tabs");
 const categoriesEl = document.getElementById("categories");
@@ -141,7 +158,10 @@ function svgEl(innerPath) {
 
 function renderTabs() {
   tabsEl.innerHTML = "";
-  APPS.forEach((app) => {
+  // Nazadnje odprti so na levi, tisti, ki se dolgo niso odprli (ali sploh
+  // še ne), pa proti desni — slice() pred sort(), da APPS ostane nespremenjen.
+  const sorted = APPS.slice().sort((a, b) => (lastSeen[b.id] || 0) - (lastSeen[a.id] || 0));
+  sorted.forEach((app) => {
     const btn = document.createElement("button");
     btn.className = "tab" + (app.id === activeApp ? " active" : "");
     btn.style.setProperty("--tab-c1", app.accent[0]);
@@ -165,6 +185,7 @@ function renderTabs() {
 
 function selectApp(id) {
   activeApp = id;
+  touchLastSeen(id);
   renderTabs();
   renderPanel();
 }
@@ -177,6 +198,10 @@ function renderPanel() {
   const app = getApp(activeApp);
   panelTitleEl.textContent = app.name;
   panelLinkEl.href = app.url;
+  // Ista barva kot gumb za izbiro aplikacije (glej --tab-c1 v renderTabs) —
+  // uporabljajo jo obrobe kategorij in vnosnega polja za novo kategorijo
+  // (style.css), da so zavihki bolje vidni in vseskozi obarvani po aplikaciji.
+  document.documentElement.style.setProperty("--app-accent", app.accent[0]);
   renderCategories();
 }
 
