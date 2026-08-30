@@ -47,6 +47,13 @@ const APPS = [
     icon: `<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>`
   },
   {
+    id: "viharnik",
+    name: "Viharnik",
+    url: "https://viharnik.vercel.app/",
+    accent: ["#6d5cf5", "#facc15"],
+    icon: `<path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><path d="M13 11 9 17h6l-4 6"/>`
+  },
+  {
     id: "zdrav",
     name: "Zdrav",
     url: "https://zig4to.github.io/Zdrav/",
