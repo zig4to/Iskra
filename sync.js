@@ -14,8 +14,8 @@
 window.Sync = (function () {
   'use strict';
 
-  var URL_BASE = 'https://mpiliybdfhgqslubvhwd.supabase.co';
-  var API_KEY  = 'sb_publishable_3888vcj_lpaerHs9H74Llg_-0p1W_MC';
+  var URL_BASE = 'https://abjnxhfxjolwwxlckkje.supabase.co';
+  var API_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiam54aGZ4am9sd3d4bGNra2plIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2ODIzODksImV4cCI6MjEwMzI1ODM4OX0.JfVrPZmacEQ4-Hziue2ZDK77foi5IXuNOU0Edayfqa8';
   var LAST_KEY = 'iskra-zadnja-sinh';
 
   var running = false;
