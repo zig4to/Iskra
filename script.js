@@ -225,6 +225,12 @@ function svgEl(innerPath) {
   return svg;
 }
 
+// Lucide "trash-2" — enotna ikona za brisanje (stvari in kategorij).
+const TRASH_ICON =
+  `<path d="M3 6h18"/>` +
+  `<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>` +
+  `<path d="M10 11v6"/><path d="M14 11v6"/>`;
+
 function renderTabs() {
   tabsEl.innerHTML = "";
   // Nazadnje odprti so na levi, tisti, ki se dolgo niso odprli (ali sploh
@@ -333,7 +339,8 @@ function renderCategories() {
     delBtn.className = "mini-btn";
     delBtn.type = "button";
     delBtn.title = "Izbriši kategorijo";
-    delBtn.textContent = "🗑";
+    delBtn.setAttribute("aria-label", "Izbriši kategorijo");
+    delBtn.appendChild(svgEl(TRASH_ICON));
     delBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (cat.items.length && !confirm(`Izbrišem kategorijo "${cat.name}" z vsemi stvarmi?`)) return;
@@ -466,7 +473,11 @@ function renderCategories() {
           copyBtn.className = "item-copy";
           copyBtn.type = "button";
           copyBtn.title = "Kopiraj";
-          copyBtn.textContent = "📋";
+          copyBtn.setAttribute("aria-label", "Kopiraj besedilo");
+          copyBtn.appendChild(svgEl(
+            `<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>` +
+            `<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>`
+          ));
           copyBtn.addEventListener("click", () => {
             copyText(item.text);
             copyBtn.classList.add("copied");
@@ -474,14 +485,15 @@ function renderCategories() {
             setTimeout(() => {
               copyBtn.classList.remove("copied");
               copyBtn.title = "Kopiraj";
-            }, 1000);
+            }, 2000);
           });
 
           const del = document.createElement("button");
           del.className = "item-del";
           del.type = "button";
           del.title = "Izbriši";
-          del.textContent = "✕";
+          del.setAttribute("aria-label", "Izbriši stvar");
+          del.appendChild(svgEl(TRASH_ICON));
           del.addEventListener("click", () => {
             cat.items = cat.items.filter((i) => i.id !== item.id);
             saveData();

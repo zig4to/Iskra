@@ -339,11 +339,14 @@ button, input {
   border: none;
   cursor: pointer;
   color: var(--text-soft);
-  font-size: 15px;
   padding: 6px;
   border-radius: 8px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+.mini-btn svg { width: 16px; height: 16px; display: block; }
 .mini-btn:hover { background: var(--card-2); color: var(--danger); }
 
 /* ---------- Zavihki po nujnosti (nujno / splošno / mogoče) ---------- */
@@ -514,8 +517,22 @@ button, input {
   padding: 6px;
   border-radius: 8px;
 }
+.item-copy,
+.item-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item-copy { transition: background .15s, color .15s, outline-color .2s, background-color .2s; }
+.item-copy svg,
+.item-del svg { width: 16px; height: 16px; display: block; }
 .item-copy:hover { background: var(--card-2); color: var(--app-accent, var(--accent)); }
-.item-copy.copied { color: #22c55e; }
+.item-copy.copied {
+  color: #22c55e;
+  outline: 1.5px solid #22c55e;
+  outline-offset: 1px;
+  background: color-mix(in srgb, #22c55e 14%, transparent);
+}
 .item-del:hover { background: var(--card-2); color: var(--danger); }
 
 .add-item-form {
