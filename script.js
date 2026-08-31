@@ -12,6 +12,13 @@ const APPS = [
     icon: `<path d="M9 3.5h6A1.5 1.5 0 0 1 16.5 5v.5H18a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2h1.5V5A1.5 1.5 0 0 1 9 3.5Z"/><path d="m8.5 12.5 2 2 4-4.5"/><path d="M8.5 18h7"/>`
   },
   {
+    id: "iskra",
+    name: "Iskra",
+    url: "https://zig4to.github.io/Iskra/",
+    accent: ["#f59e0b", "#ef4444"],
+    icon: `<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>`
+  },
+  {
     id: "kam",
     name: "Kam",
     url: "https://zig4to.github.io/Kam/",
@@ -568,6 +575,62 @@ hardResetBtn.addEventListener("click", () => {
     .catch((e) => console.warn("Trd reset ni v celoti uspel:", e))
     .then(reloadFresh);
 });
+
+// -------- Drsenje zavihkov levo/desno --------
+// Telefon: overflow-x: auto poskrbi za naravno drsenje s prstom.
+// Desktop: z miško lahko pritisneš in povlečeš trak, kolešček pa ga premika
+// vodoravno (tudi navpični zdrs).
+function setupTabScroll() {
+  let down = false, moved = false, startX = 0, startScroll = 0;
+
+  const overflowing = () => tabsEl.scrollWidth > tabsEl.clientWidth + 1;
+  const paintGrab = () => tabsEl.classList.toggle("grabbable", overflowing());
+  paintGrab();
+  window.addEventListener("resize", paintGrab);
+  new MutationObserver(paintGrab).observe(tabsEl, { childList: true });
+
+  tabsEl.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "mouse" || e.button !== 0 || !overflowing()) return;
+    down = true;
+    moved = false;
+    startX = e.clientX;
+    startScroll = tabsEl.scrollLeft;
+  });
+
+  tabsEl.addEventListener("pointermove", (e) => {
+    if (!down) return;
+    const dx = e.clientX - startX;
+    if (!moved && Math.abs(dx) > 5) {
+      moved = true;
+      tabsEl.classList.add("dragging");
+      tabsEl.setPointerCapture(e.pointerId);
+    }
+    if (moved) tabsEl.scrollLeft = startScroll - dx;
+  });
+
+  const end = () => {
+    down = false;
+    tabsEl.classList.remove("dragging");
+  };
+  tabsEl.addEventListener("pointerup", end);
+  tabsEl.addEventListener("pointercancel", end);
+
+  // Po vlečenju prepreči, da bi se sprožil klik na zavihek pod kazalcem.
+  tabsEl.addEventListener("click", (e) => {
+    if (!moved) return;
+    e.preventDefault();
+    e.stopPropagation();
+    moved = false;
+  }, true);
+
+  // Navpični kolešček -> vodoravno drsenje.
+  tabsEl.addEventListener("wheel", (e) => {
+    if (!overflowing() || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    tabsEl.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
+}
+setupTabScroll();
 
 renderTabs();
 renderPanel();

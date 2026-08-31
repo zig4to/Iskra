@@ -146,6 +146,9 @@ button, input {
   scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
+.tabs.grabbable { cursor: grab; }
+.tabs.dragging { cursor: grabbing; user-select: none; scroll-behavior: auto; }
+.tabs.dragging .tab { pointer-events: none; }
 
 .tab {
   flex: none;
@@ -434,11 +437,42 @@ button, input {
 .item-check.editing { cursor: text; }
 
 .item-check input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
   width: 19px;
   height: 19px;
   flex: none;
-  accent-color: var(--accent);
+  border-radius: 6px;
+  border: 1.5px solid color-mix(in srgb, var(--app-accent, var(--accent)) 65%, var(--line));
+  background: color-mix(in srgb, var(--app-accent, var(--accent)) 14%, var(--card-2));
+  display: grid;
+  place-content: center;
   cursor: pointer;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.item-check input[type="checkbox"]::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  background: #fff;
+  transform: scale(0);
+  transition: transform .12s ease-out;
+  clip-path: polygon(14% 44%, 0% 65%, 40% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.item-check input[type="checkbox"]:checked::before { transform: scale(1); }
+.item-check input[type="checkbox"]:checked {
+  background: var(--app-accent, var(--accent));
+  border-color: var(--app-accent, var(--accent));
+}
+.item-check input[type="checkbox"]:hover {
+  border-color: var(--app-accent, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-accent, var(--accent)) 18%, transparent);
+}
+.item-check input[type="checkbox"]:focus-visible {
+  outline: none;
+  border-color: var(--app-accent, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-accent, var(--accent)) 32%, transparent);
 }
 
 .item-text {
@@ -453,7 +487,10 @@ button, input {
   text-decoration: line-through;
   opacity: .8;
 }
-.item.done .item-check input[type="checkbox"] { accent-color: var(--danger); }
+.item.done .item-check input[type="checkbox"] {
+  background: var(--danger);
+  border-color: var(--danger);
+}
 
 .item-text-edit {
   flex: 1;

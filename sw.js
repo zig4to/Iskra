@@ -1,6 +1,6 @@
 /* Predpomnilnik lupine aplikacije, da deluje tudi brez povezave.
    Ob spremembi datotek povečaj VERSION. */
-var VERSION = 'iskra-v15';
+var VERSION = 'iskra-v16';
 var SHELL = [
   './', './index.html', './style.css', './script.js', './sync.js', './icon.svg', './manifest.json',
   './icons/icon-192.png', './icons/icon-512.png',
