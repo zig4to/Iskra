@@ -33,6 +33,13 @@ const APPS = [
     icon: `<rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13.5h3M7.5 17h6"/>`
   },
   {
+    id: "posel",
+    name: "Posel",
+    url: "https://posel-six.vercel.app/",
+    accent: ["#93a2c6", "#282c47"],
+    icon: `<rect x="3.6" y="8.4" width="16.8" height="11.6" rx="3.4"/><path d="M9.4 8.4V7a2.4 2.4 0 0 1 2.4-2.4h0.4a2.4 2.4 0 0 1 2.4 2.4v1.4"/>`
+  },
+  {
     id: "racuni",
     name: "Računi",
     url: "https://zig4to.github.io/Racuni/",
