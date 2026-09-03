@@ -193,6 +193,18 @@ button, input {
 }
 .tab.active .tab-name { color: var(--text); }
 
+/* Desktop: zavihki se prelomijo v več vrst namesto vodoravnega drsnika.
+   Ker trak takrat ne presega širine, se drsenje/vlečenje v script.js
+   (pogojeno z overflowing()) samodejno izklopi. */
+@media (min-width: 760px) {
+  .tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: visible;
+    padding-bottom: 14px;
+  }
+}
+
 /* ---------- Glavni panel ---------- */
 .panel {
   max-width: 900px;
