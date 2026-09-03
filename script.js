@@ -190,6 +190,7 @@ let activeTab = {}; // catId -> id iz PRIORITETE; ni shranjeno, samo za to sejo
 let collapsedCats = {}; // catId -> bool (zložena kategorija); ni shranjeno, samo za to sejo
 let lastSeen = loadLastSeen(); // appId -> Date.now() ob zadnjem odpiranju zavihka
 let editingItem = null; // id stvari, ki se trenutno ureja (klik na besedilo); ni shranjeno
+let focusAddCat = null; // id kategorije, katere vnosno polje za dodajanje naj po ponovnem izrisu dobi fokus (veriženje vnosov z Enter)
 
 function copyText(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -528,6 +529,7 @@ function renderCategories() {
       const addInput = document.createElement("input");
       addInput.placeholder = "Dodaj funkcijo / izboljšavo…";
       addInput.autocomplete = "off";
+      addInput.dataset.cat = cat.id;
 
       const addBtn = document.createElement("button");
       addBtn.type = "submit";
@@ -542,6 +544,9 @@ function renderCategories() {
         cat.items.push({ id: uid(), text, done: false, prioriteta: active });
         saveData();
         addInput.value = "";
+        // Po izrisu vrni fokus v isto vnosno polje, da lahko z Enter dodajaš
+        // stvari eno za drugo brez klikanja na "+".
+        focusAddCat = cat.id;
         renderCategories();
       });
 
@@ -556,6 +561,16 @@ function renderCategories() {
   if (editingItem) {
     const editEl = categoriesEl.querySelector(".item-text-edit");
     if (editEl) { editEl.focus(); editEl.select(); }
+  }
+
+  // Veriženje dodajanja: po Enter-ju v polju "Dodaj …" se izris ponovi in
+  // fokus se izgubi — tu ga vrnemo v isto polje. Klic je še vedno znotraj
+  // uporabnikove geste (submit iz Enter), zato tipkovnica na mobilnem
+  // ostane odprta.
+  if (focusAddCat) {
+    const addEl = categoriesEl.querySelector('.add-item-form input[data-cat="' + focusAddCat + '"]');
+    if (addEl) addEl.focus();
+    focusAddCat = null;
   }
 }
 
