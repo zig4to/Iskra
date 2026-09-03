@@ -40,6 +40,13 @@ const APPS = [
     icon: `<rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13.5h3M7.5 17h6"/>`
   },
   {
+    id: "pisi",
+    name: "Piši",
+    url: "https://pisi-omega.vercel.app/",
+    accent: ["#6366f1", "#3b82f6"],
+    icon: `<path d="M2 6h4M2 10h4M2 14h4M2 18h4"/><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M16 2v20"/>`
+  },
+  {
     id: "posel",
     name: "Posel",
     url: "https://posel-six.vercel.app/",
