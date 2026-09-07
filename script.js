@@ -420,10 +420,10 @@ function renderCategories() {
         ul.className = "items";
 
         sortedItems(shown).forEach((item) => {
-          const li = document.createElement("li");
-          li.className = "item" + (item.done ? " done" : "");
-
           const editing = editingItem === item.id;
+
+          const li = document.createElement("li");
+          li.className = "item" + (item.done ? " done" : "") + (editing ? " editing" : "");
 
           // Ko urejamo besedilo, je ovojnica <div> namesto <label> — <label>
           // okrog checkboxa bi klik kamorkoli (tudi v vnosno polje) preusmeril
@@ -444,9 +444,19 @@ function renderCategories() {
           label.appendChild(checkbox);
 
           if (editing) {
-            const editInput = document.createElement("input");
+            // <textarea> namesto <input>: pri dolgem besedilu se polje razpre
+            // po višini (autoGrow), da je celoten tekst viden naenkrat, ne
+            // stisnjen v eno vrsto. Enter še vedno potrdi (kot pri dodajanju),
+            // zato v besedilu ni prelomov — textarea le ovije predolgo vrsto.
+            const editInput = document.createElement("textarea");
             editInput.className = "item-text-edit";
+            editInput.rows = 1;
             editInput.value = item.text;
+            const autoGrow = () => {
+              editInput.style.height = "auto";
+              editInput.style.height = editInput.scrollHeight + "px";
+            };
+            editInput.addEventListener("input", autoGrow);
             editInput.addEventListener("click", (e) => e.stopPropagation());
             const commit = () => {
               const v = editInput.value.trim();
@@ -560,7 +570,14 @@ function renderCategories() {
   // ni bil del dokumenta (focus() na odklopljenem elementu ne naredi nič).
   if (editingItem) {
     const editEl = categoriesEl.querySelector(".item-text-edit");
-    if (editEl) { editEl.focus(); editEl.select(); }
+    if (editEl) {
+      // Višino nastavimo šele zdaj — scrollHeight je uporaben šele, ko je
+      // element v dokumentu.
+      editEl.style.height = "auto";
+      editEl.style.height = editEl.scrollHeight + "px";
+      editEl.focus();
+      editEl.select();
+    }
   }
 
   // Veriženje dodajanja: po Enter-ju v polju "Dodaj …" se izris ponovi in
