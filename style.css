@@ -524,6 +524,9 @@ button, input {
   font-size: 14.5px;
   font-family: inherit;
   line-height: 1.45;
+  /* `button, input` deduje barvo besedila, <textarea> pa ne — brez tega bi
+     bil tekst med urejanjem privzeto črn na temni podlagi. */
+  color: var(--text);
   outline: none;
   /* Textarea, ki raste po višini (JS autoGrow): brez ročke za spreminjanje
      velikosti in brez lastnega drsnika med rastjo. */
