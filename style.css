@@ -409,24 +409,33 @@ button, input {
 }
 .add-cat-form button:hover { border-color: var(--app-accent, var(--accent)); }
 
-/* Gumb "+ Kategorija" v glavi panela — samo na telefonu (glej index.html). */
+/* Gumba v glavi panela: "+ Kategorija" (samo telefon) in "+ Aktualno"
+   (povsod, rahlo obarvan v barvi aplikacije, da izstopa). */
+.add-cat-btn-head,
+.add-akt-btn {
+  flex: none;
+  align-self: center;
+  background: var(--card-2);
+  border: 1px solid color-mix(in srgb, var(--app-accent, var(--accent)) 55%, var(--line));
+  border-radius: var(--radius-sm);
+  padding: 6px 11px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.add-cat-btn-head:hover,
+.add-akt-btn:hover { border-color: var(--app-accent, var(--accent)); }
+.add-akt-btn { background: color-mix(in srgb, var(--app-accent, var(--accent)) 16%, var(--card-2)); }
+
 .add-cat-btn-head { display: none; }
 
 @media (max-width: 759px) {
-  .panel-head { align-items: center; }
+  .panel-head { align-items: center; gap: 8px; }
+  /* Tri gumbi v isti vrsti — predolgo ime aplikacije se skrajša s "…". */
+  .panel-head h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .add-cat-form { display: none; }
-  .add-cat-btn-head {
-    display: block;
-    background: var(--card-2);
-    border: 1px solid color-mix(in srgb, var(--app-accent, var(--accent)) 55%, var(--line));
-    border-radius: var(--radius-sm);
-    padding: 6px 11px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .add-cat-btn-head:hover { border-color: var(--app-accent, var(--accent)); }
+  .add-cat-btn-head { display: block; }
 }
 
 /* ---------- Okno za novo kategorijo (telefon) ---------- */

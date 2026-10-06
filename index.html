@@ -67,9 +67,11 @@
   <main class="panel">
     <div class="panel-head">
       <h2 id="panelTitle"></h2>
-      <!-- Na telefonu je gumb tu (v vrsti z "Odpri aplikacijo") in odpre okno
-           za vnos; na namizju je namesto tega vnosno polje spodaj. -->
+      <!-- Na telefonu je "+ Kategorija" tu (v vrsti z "Odpri aplikacijo") in
+           odpre okno za vnos; na namizju je namesto tega vnosno polje spodaj.
+           "+ Aktualno" je tu povsod — doda stvar v pripeto kategorijo. -->
       <button type="button" id="addCatHeadBtn" class="add-cat-btn-head">+ Kategorija</button>
+      <button type="button" id="addAktualnoBtn" class="add-akt-btn">+ Aktualno</button>
       <a id="panelLink" class="open-link" href="#" target="_blank" rel="noopener" title="Odpri aplikacijo" aria-label="Odpri aplikacijo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
       </a>
@@ -83,12 +85,14 @@
     <div class="categories" id="categories"></div>
   </main>
 
-  <dialog class="cat-dialog" id="addCatDialog" aria-labelledby="addCatDialogTitle">
-    <form id="addCatDialogForm">
-      <h3 id="addCatDialogTitle">Nova kategorija</h3>
-      <input id="addCatDialogInput" placeholder="Ime kategorije…" autocomplete="off" />
+  <!-- Skupno okno za vnos ("+ Kategorija" na telefonu, "+ Aktualno") —
+       naslov, namig in kaj se zgodi ob potrditvi nastavi openInputDialog(). -->
+  <dialog class="cat-dialog" id="inputDialog" aria-labelledby="inputDialogTitle">
+    <form id="inputDialogForm">
+      <h3 id="inputDialogTitle"></h3>
+      <input id="inputDialogInput" autocomplete="off" />
       <div class="cat-dialog-actions">
-        <button type="button" id="addCatDialogCancel">Prekliči</button>
+        <button type="button" id="inputDialogCancel">Prekliči</button>
         <button type="submit" class="primary">Dodaj</button>
       </div>
     </form>

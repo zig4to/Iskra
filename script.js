@@ -71,7 +71,7 @@ const APPS = [
   {
     id: "tomsstudios",
     created: "2026-08-24T19:23",
-    name: "TomsStudios",
+    name: "TomStudios",
     url: "https://zig4to.github.io/TomsStudios/",
     accent: ["#0ea5e9", "#6366f1"],
     icon: `<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>`
@@ -289,7 +289,7 @@ const recentStripEl = document.getElementById("recentStrip");
 
 // Zložljiva razdelka nad panelom ("Aplikacije", "Nazadnje dodano") — klik na
 // naslov skrije/pokaže vsebino; stanje si zapomni po osvežitvi pod ključem iz
-// data-fold-key.
+// data-fold-key. Vrne funkcijo (collapsed) => void za zlaganje iz kode.
 function setupCollapsible(sectionEl) {
   const toggle = sectionEl.querySelector(".section-toggle");
   const key = sectionEl.dataset.foldKey;
@@ -299,17 +299,20 @@ function setupCollapsible(sectionEl) {
     toggle.setAttribute("aria-expanded", String(!collapsed));
   };
 
+  const set = (collapsed) => {
+    apply(collapsed);
+    try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch (e) { /* poln disk */ }
+  };
+
   try { apply(localStorage.getItem(key) === "1"); }
   catch (e) { apply(false); }
 
-  toggle.addEventListener("click", () => {
-    const collapsed = !sectionEl.classList.contains("is-collapsed");
-    apply(collapsed);
-    try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch (e) { /* poln disk */ }
-  });
+  toggle.addEventListener("click", () => set(!sectionEl.classList.contains("is-collapsed")));
+  return set;
 }
 
-document.querySelectorAll(".fold-section").forEach(setupCollapsible);
+const setAppsCollapsed = setupCollapsible(document.getElementById("appsSection"));
+setupCollapsible(document.getElementById("recentSection"));
 
 function svgEl(innerPath) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -361,7 +364,12 @@ function renderTabs() {
 
     btn.appendChild(iconWrap);
     btn.appendChild(label);
-    btn.addEventListener("click", () => selectApp(app.id));
+    // Izbira aplikacije zloži mrežo aplikacij — ko je beležka izbrana, mreža
+    // le zaseda prostor; s klikom na "Aplikacije" se spet razpre.
+    btn.addEventListener("click", () => {
+      selectApp(app.id);
+      setAppsCollapsed(true);
+    });
     tabsEl.appendChild(btn);
   });
 }
@@ -852,27 +860,56 @@ addCatForm.addEventListener("submit", (e) => {
   if (addCategory(addCatInput.value)) addCatInput.value = "";
 });
 
-// Telefon: gumb "+ Kategorija" v glavi odpre okno za vnos (vnosno polje
-// pod glavo je tam skrito, glej style.css).
-const addCatDialog = document.getElementById("addCatDialog");
-const addCatDialogInput = document.getElementById("addCatDialogInput");
+// Doda stvar v pripeto kategorijo "Aktualno" trenutne aplikacije — v zavihek
+// nujnosti, ki je tam izbran, da je nova stvar takoj vidna. Kategorijo
+// razpre, če je bila zložena.
+function addToAktualno(text) {
+  text = text.trim();
+  if (!text) return false;
+  const cat = data[activeApp].find((c) => c.pinned);
+  const prioriteta = activeTab[cat.id] || "splosno";
+  cat.items.push({ id: uid(), text, done: false, prioriteta, created: Date.now() });
+  setCatCollapsed(cat.id, false);
+  saveData();
+  renderCategories();
+  return true;
+}
 
-document.getElementById("addCatHeadBtn").addEventListener("click", () => {
-  addCatDialogInput.value = "";
-  addCatDialog.showModal();
-  addCatDialogInput.focus();
-});
+// ---- skupno okno za vnos ----
+const inputDialog = document.getElementById("inputDialog");
+const inputDialogTitle = document.getElementById("inputDialogTitle");
+const inputDialogInput = document.getElementById("inputDialogInput");
+let inputDialogSubmit = null; // (vrednost) => bool; true = uspelo, zapri okno
 
-document.getElementById("addCatDialogForm").addEventListener("submit", (e) => {
+function openInputDialog(title, placeholder, onSubmit) {
+  inputDialogTitle.textContent = title;
+  inputDialogInput.placeholder = placeholder;
+  inputDialogInput.value = "";
+  inputDialogSubmit = onSubmit;
+  inputDialog.showModal();
+  inputDialogInput.focus();
+}
+
+document.getElementById("inputDialogForm").addEventListener("submit", (e) => {
   e.preventDefault();
-  if (addCategory(addCatDialogInput.value)) addCatDialog.close();
+  if (inputDialogSubmit && inputDialogSubmit(inputDialogInput.value)) inputDialog.close();
 });
 
-document.getElementById("addCatDialogCancel").addEventListener("click", () => addCatDialog.close());
+document.getElementById("inputDialogCancel").addEventListener("click", () => inputDialog.close());
 
 // Klik na zatemnjeno ozadje (izven okna) zapre okno.
-addCatDialog.addEventListener("click", (e) => {
-  if (e.target === addCatDialog) addCatDialog.close();
+inputDialog.addEventListener("click", (e) => {
+  if (e.target === inputDialog) inputDialog.close();
+});
+
+// Telefon: gumb "+ Kategorija" v glavi odpre okno za vnos (vnosno polje
+// pod glavo je tam skrito, glej style.css).
+document.getElementById("addCatHeadBtn").addEventListener("click", () => {
+  openInputDialog("Nova kategorija", "Ime kategorije…", addCategory);
+});
+
+document.getElementById("addAktualnoBtn").addEventListener("click", () => {
+  openInputDialog(`Aktualno · ${getApp(activeApp).name}`, "Dodaj funkcijo / izboljšavo…", addToAktualno);
 });
 
 // -------------------------------------------------------------- trd reset
