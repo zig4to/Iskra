@@ -14,7 +14,7 @@ da se isti seznam vidi na vseh napravah.
 npm start
 ```
 
-Odpre statični strežnik na `:8080`. Ni build koraka, ni odvisnosti.
+Odpre statični strežnik na `:8081`. Ni build koraka, ni odvisnosti.
 
 ## Struktura
 
