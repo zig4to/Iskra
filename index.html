@@ -42,12 +42,37 @@
     </div>
   </header>
 
-  <nav class="tabs" id="tabs" aria-label="Aplikacije"></nav>
+  <!-- Zložljiva razdelka: klik na naslov skrije/pokaže .section-body (glej
+       setupCollapsible v script.js). -->
+  <section class="fold-section" id="appsSection" data-fold-key="iskra-aplikacije-zlozeno" aria-labelledby="appsTitle">
+    <h3 class="section-title" id="appsTitle">
+      <button type="button" class="section-toggle" aria-expanded="true" aria-controls="tabs">
+        Aplikacije
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </h3>
+    <nav class="tabs section-body" id="tabs" aria-label="Aplikacije"></nav>
+  </section>
+
+  <section class="fold-section recent" id="recentSection" data-fold-key="iskra-nazadnje-zlozeno" aria-labelledby="recentTitle" hidden>
+    <h3 class="section-title" id="recentTitle">
+      <button type="button" class="section-toggle" aria-expanded="true" aria-controls="recentStrip">
+        Nazadnje dodano
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </h3>
+    <div class="recent-strip section-body" id="recentStrip"></div>
+  </section>
 
   <main class="panel">
     <div class="panel-head">
       <h2 id="panelTitle"></h2>
-      <a id="panelLink" class="open-link" href="#" target="_blank" rel="noopener">Odpri aplikacijo ↗</a>
+      <!-- Na telefonu je gumb tu (v vrsti z "Odpri aplikacijo") in odpre okno
+           za vnos; na namizju je namesto tega vnosno polje spodaj. -->
+      <button type="button" id="addCatHeadBtn" class="add-cat-btn-head">+ Kategorija</button>
+      <a id="panelLink" class="open-link" href="#" target="_blank" rel="noopener" title="Odpri aplikacijo" aria-label="Odpri aplikacijo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+      </a>
     </div>
 
     <form class="add-cat-form" id="addCatForm">
@@ -57,6 +82,17 @@
 
     <div class="categories" id="categories"></div>
   </main>
+
+  <dialog class="cat-dialog" id="addCatDialog" aria-labelledby="addCatDialogTitle">
+    <form id="addCatDialogForm">
+      <h3 id="addCatDialogTitle">Nova kategorija</h3>
+      <input id="addCatDialogInput" placeholder="Ime kategorije…" autocomplete="off" />
+      <div class="cat-dialog-actions">
+        <button type="button" id="addCatDialogCancel">Prekliči</button>
+        <button type="submit" class="primary">Dodaj</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="sync.js"></script>
   <script src="script.js"></script>

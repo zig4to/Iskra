@@ -6,6 +6,7 @@ const STORAGE_KEY = "iskra-data-v1";
 const APPS = [
   {
     id: "checkliste",
+    created: "2026-07-25",
     name: "Checkliste",
     url: "https://zig4to.github.io/Checkliste/",
     accent: ["#10b981", "#22d3ee"],
@@ -13,6 +14,7 @@ const APPS = [
   },
   {
     id: "iskra",
+    created: "2026-08-26T20:32",
     name: "Iskra",
     url: "https://zig4to.github.io/Iskra/",
     accent: ["#f59e0b", "#ef4444"],
@@ -20,6 +22,7 @@ const APPS = [
   },
   {
     id: "kam",
+    created: "2026-08-27",
     name: "Kam",
     url: "https://zig4to.github.io/Kam/",
     accent: ["#38bdf8", "#0f766e"],
@@ -27,6 +30,7 @@ const APPS = [
   },
   {
     id: "komadi",
+    created: "2026-08-25",
     name: "Komadi",
     url: "https://zig4to.github.io/Komadi/",
     accent: ["#ec4899", "#f97316"],
@@ -34,6 +38,7 @@ const APPS = [
   },
   {
     id: "mascajt",
+    created: "2026-08-20",
     name: "masCajt",
     url: "https://zig4to.github.io/masCajt/",
     accent: ["#6366f1", "#a855f7"],
@@ -41,6 +46,7 @@ const APPS = [
   },
   {
     id: "pisi",
+    created: "2026-09-03",
     name: "Piši",
     url: "https://pisi-omega.vercel.app/",
     accent: ["#6366f1", "#3b82f6"],
@@ -48,6 +54,7 @@ const APPS = [
   },
   {
     id: "posel",
+    created: "2026-08-31",
     name: "Posel",
     url: "https://posel-six.vercel.app/",
     accent: ["#93a2c6", "#282c47"],
@@ -55,6 +62,7 @@ const APPS = [
   },
   {
     id: "racuni",
+    created: "2026-08-24T13:09",
     name: "Računi",
     url: "https://zig4to.github.io/Racuni/",
     accent: ["#f59e0b", "#fb7185"],
@@ -62,6 +70,7 @@ const APPS = [
   },
   {
     id: "tomsstudios",
+    created: "2026-08-24T19:23",
     name: "TomsStudios",
     url: "https://zig4to.github.io/TomsStudios/",
     accent: ["#0ea5e9", "#6366f1"],
@@ -69,6 +78,7 @@ const APPS = [
   },
   {
     id: "viharnik",
+    created: "2026-08-30",
     name: "Viharnik",
     url: "https://viharnik.vercel.app/",
     accent: ["#6d5cf5", "#facc15"],
@@ -76,6 +86,7 @@ const APPS = [
   },
   {
     id: "vzlet",
+    created: "2026-09-09",
     name: "Vzlet",
     url: "https://vzlet-ruddy.vercel.app/",
     accent: ["#6366f1", "#3b82f6"],
@@ -83,6 +94,7 @@ const APPS = [
   },
   {
     id: "zdrav",
+    created: "2026-08-26T21:30",
     name: "Zdrav",
     url: "https://zig4to.github.io/Zdrav/",
     accent: ["#22c55e", "#16a34a"],
@@ -119,24 +131,18 @@ function prioritetaOf(item) {
   return item.prioriteta || "splosno";
 }
 
+// Opravljena stvar ostane prečrtana v seznamu še en dan (da se lahko
+// premisliš), nato se pospravi v arhiv na dnu kategorije — iz podatkov ne
+// izgine, šteje se v statistiko (števec v glavi kategorije). Stari opravljeni
+// zapisi brez doneAt (izpred te funkcije) gredo v arhiv takoj.
+const ARCHIVE_AFTER = 24 * 60 * 60 * 1000;
+
+function isArchived(item) {
+  return item.done && (!item.doneAt || Date.now() - item.doneAt > ARCHIVE_AFTER);
+}
+
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
-// Kdaj je bila katera aplikacija nazadnje odprta — samo za razvrstitev
-// zavihkov (renderTabs), ni del data/sync. Aplikacija brez zapisa (še nikoli
-// odprta v tem brskalniku) šteje kot najstarejša (0) in pristane skrajno
-// desno.
-const LAST_SEEN_KEY = "iskra-zadnji-ogled";
-
-function loadLastSeen() {
-  try { return JSON.parse(localStorage.getItem(LAST_SEEN_KEY)) || {}; }
-  catch (e) { return {}; }
-}
-
-function touchLastSeen(id) {
-  lastSeen[id] = Date.now();
-  try { localStorage.setItem(LAST_SEEN_KEY, JSON.stringify(lastSeen)); } catch (e) { /* poln disk */ }
 }
 
 // Kateri zavihek je bil nazadnje odprt (= tisti, ki smo ga nazadnje urejali,
@@ -157,12 +163,47 @@ function persistActiveApp(id) {
   try { localStorage.setItem(ACTIVE_APP_KEY, id); } catch (e) { /* poln disk */ }
 }
 
+// Stanje pogleda po kategorijah (zložena, izbrani zavihek nujnosti, razprt
+// arhiv) — zapomni si po osvežitvi. Samo na tej napravi (ni del data/sync),
+// da npr. zlaganje na telefonu ne vpliva na računalnik. Vsaka mapa je
+// catId -> vrednost; hrani se le, kar ni privzeto.
+const COLLAPSED_CATS_KEY = "iskra-zlozene-kategorije";
+const ACTIVE_TAB_KEY = "iskra-zavihki-nujnosti";
+const OPEN_ARCHIVE_KEY = "iskra-odprti-arhivi";
+
+function loadUiMap(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || {}; }
+  catch (e) { return {}; }
+}
+
+// value === undefined/false -> privzeto, zapis se odstrani.
+function setUiMap(key, map, catId, value) {
+  if (value) map[catId] = value;
+  else delete map[catId];
+  try { localStorage.setItem(key, JSON.stringify(map)); } catch (e) { /* poln disk */ }
+}
+
+function setCatCollapsed(catId, collapsed) {
+  setUiMap(COLLAPSED_CATS_KEY, collapsedCats, catId, collapsed);
+}
+
+function setActiveTab(catId, prioId) {
+  setUiMap(ACTIVE_TAB_KEY, activeTab, catId, prioId === "splosno" ? undefined : prioId);
+}
+
+function setArchiveOpen(catId, open) {
+  setUiMap(OPEN_ARCHIVE_KEY, openArchive, catId, open);
+}
+
+// Ob brisanju kategorije počisti vse njene zapise.
+function forgetCatUi(catId) {
+  setCatCollapsed(catId, false);
+  setActiveTab(catId, "splosno");
+  setArchiveOpen(catId, false);
+}
+
 function defaultData() {
-  const data = {};
-  APPS.forEach((app) => {
-    data[app.id] = [{ id: uid(), name: "Ideje", items: [] }];
-  });
-  return data;
+  return healData({});
 }
 
 // Doda manjkajoče zavihke (npr. na novo dodano aplikacijo v APPS), ne glede
@@ -171,8 +212,24 @@ function defaultData() {
 function healData(parsed) {
   APPS.forEach((app) => {
     if (!Array.isArray(parsed[app.id])) parsed[app.id] = [{ id: uid(), name: "Ideje", items: [] }];
+    pinAktualno(parsed[app.id], app.id);
   });
   return parsed;
+}
+
+// Vsaka aplikacija ima kategorijo "Aktualno", pripeto na vrh (ni je mogoče
+// izbrisati). Id je določen z id-jem aplikacije, ne naključen — tako dve
+// napravi, ki jo ustvarita vsaka zase, pred sinhronizacijo ne dobita dveh
+// različnih. Če uporabnik že ima kategorijo z imenom "Aktualno", se pripne
+// ta (z obstoječimi stvarmi), namesto da bi nastala še ena.
+function pinAktualno(cats, appId) {
+  let idx = cats.findIndex((c) => c.pinned);
+  if (idx === -1) idx = cats.findIndex((c) => c.name.trim().toLowerCase() === "aktualno");
+  const pinned = idx === -1
+    ? { id: "aktualno-" + appId, name: "Aktualno", items: [] }
+    : cats.splice(idx, 1)[0];
+  pinned.pinned = true;
+  cats.unshift(pinned);
 }
 
 function loadData() {
@@ -193,9 +250,9 @@ function saveData() {
 
 let data = loadData();
 let activeApp = loadActiveApp();
-let activeTab = {}; // catId -> id iz PRIORITETE; ni shranjeno, samo za to sejo
-let collapsedCats = {}; // catId -> bool (zložena kategorija); ni shranjeno, samo za to sejo
-let lastSeen = loadLastSeen(); // appId -> Date.now() ob zadnjem odpiranju zavihka
+let activeTab = loadUiMap(ACTIVE_TAB_KEY); // catId -> id iz PRIORITETE (le če ni "splosno")
+let collapsedCats = loadUiMap(COLLAPSED_CATS_KEY); // catId -> true (zložena kategorija); glej setUiMap
+let openArchive = loadUiMap(OPEN_ARCHIVE_KEY); // catId -> true (razprt arhiv opravljenih)
 let editingItem = null; // id stvari, ki se trenutno ureja (klik na besedilo); ni shranjeno
 let focusAddCat = null; // id kategorije, katere vnosno polje za dodajanje naj po ponovnem izrisu dobi fokus (veriženje vnosov z Enter)
 
@@ -227,6 +284,32 @@ const panelTitleEl = document.getElementById("panelTitle");
 const panelLinkEl = document.getElementById("panelLink");
 const addCatForm = document.getElementById("addCatForm");
 const addCatInput = document.getElementById("addCatInput");
+const recentSectionEl = document.getElementById("recentSection");
+const recentStripEl = document.getElementById("recentStrip");
+
+// Zložljiva razdelka nad panelom ("Aplikacije", "Nazadnje dodano") — klik na
+// naslov skrije/pokaže vsebino; stanje si zapomni po osvežitvi pod ključem iz
+// data-fold-key.
+function setupCollapsible(sectionEl) {
+  const toggle = sectionEl.querySelector(".section-toggle");
+  const key = sectionEl.dataset.foldKey;
+
+  const apply = (collapsed) => {
+    sectionEl.classList.toggle("is-collapsed", collapsed);
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+  };
+
+  try { apply(localStorage.getItem(key) === "1"); }
+  catch (e) { apply(false); }
+
+  toggle.addEventListener("click", () => {
+    const collapsed = !sectionEl.classList.contains("is-collapsed");
+    apply(collapsed);
+    try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch (e) { /* poln disk */ }
+  });
+}
+
+document.querySelectorAll(".fold-section").forEach(setupCollapsible);
 
 function svgEl(innerPath) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -246,17 +329,27 @@ const TRASH_ICON =
   `<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>` +
   `<path d="M10 11v6"/><path d="M14 11v6"/>`;
 
+// Lucide "pin" — oznaka pripete kategorije "Aktualno".
+const PIN_ICON =
+  `<path d="M12 17v5"/>` +
+  `<path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>`;
+
 function renderTabs() {
   tabsEl.innerHTML = "";
-  // Nazadnje odprti so na levi, tisti, ki se dolgo niso odprli (ali sploh
-  // še ne), pa proti desni — slice() pred sort(), da APPS ostane nespremenjen.
-  const sorted = APPS.slice().sort((a, b) => (lastSeen[b.id] || 0) - (lastSeen[a.id] || 0));
+  // Najstarejše ustvarjene aplikacije (APPS[].created, datum repozitorija)
+  // so levo zgoraj, najnovejše na koncu — slice() pred sort(), da APPS
+  // ostane nespremenjen.
+  const sorted = APPS.slice().sort((a, b) => a.created.localeCompare(b.created));
   sorted.forEach((app) => {
     const btn = document.createElement("button");
     btn.className = "tab" + (app.id === activeApp ? " active" : "");
     btn.style.setProperty("--tab-c1", app.accent[0]);
     btn.style.setProperty("--tab-c2", app.accent[1]);
     btn.setAttribute("type", "button");
+    // Na telefonu je ime skrito (samo ikona) — naj ostane vsaj v namigu in
+    // za bralnike zaslona.
+    btn.title = app.name;
+    btn.setAttribute("aria-label", app.name);
 
     const iconWrap = document.createElement("span");
     iconWrap.className = "tab-icon";
@@ -275,7 +368,6 @@ function renderTabs() {
 
 function selectApp(id) {
   activeApp = id;
-  touchLastSeen(id);
   persistActiveApp(id);
   renderTabs();
   renderPanel();
@@ -302,7 +394,72 @@ function sortedItems(items) {
     .map((x) => x.item);
 }
 
+// Čas nastanka stvari — novejše imajo polje `created`, starejše (izpred te
+// funkcije) pa ga razberemo iz id-ja: uid() se začne z Date.now() v base36
+// (8 znakov), sledi 6 naključnih.
+function createdAt(item) {
+  if (item.created) return item.created;
+  const t = parseInt(String(item.id).slice(0, 8), 36);
+  return Number.isFinite(t) ? t : 0;
+}
+
+const RECENT_LIMIT = 20;
+
+// Trak "Nazadnje dodano" pod zavihki aplikacij — zadnje dodane (še ne
+// opravljene) stvari iz vseh aplikacij, v stolpcih po dve, drsi se levo.
+function renderRecent() {
+  const all = [];
+  APPS.forEach((app) => {
+    (data[app.id] || []).forEach((cat) => {
+      cat.items.forEach((item) => {
+        if (!item.done) all.push({ app, cat, item });
+      });
+    });
+  });
+  all.sort((a, b) => createdAt(b.item) - createdAt(a.item));
+  const recent = all.slice(0, RECENT_LIMIT);
+
+  recentSectionEl.hidden = !recent.length;
+  recentStripEl.innerHTML = "";
+
+  recent.forEach(({ app, cat, item }) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "recent-card";
+    card.title = `${app.name} · ${cat.name}\n${item.text}`;
+    card.style.setProperty("--tab-c1", app.accent[0]);
+    card.style.setProperty("--tab-c2", app.accent[1]);
+
+    const iconWrap = document.createElement("span");
+    iconWrap.className = "tab-icon";
+    iconWrap.appendChild(svgEl(app.icon));
+
+    const text = document.createElement("span");
+    text.className = "recent-text";
+    text.textContent = item.text;
+
+    card.appendChild(iconWrap);
+    card.appendChild(text);
+    card.addEventListener("click", () => openItem(app.id, cat.id, item));
+    recentStripEl.appendChild(card);
+  });
+}
+
+// Skok na stvar iz traku: odpre aplikacijo, razpre kategorijo, izbere pravi
+// zavihek nujnosti in stvar pomakne v pogled ter jo na kratko poudari.
+function openItem(appId, catId, item) {
+  setCatCollapsed(catId, false);
+  setActiveTab(catId, prioritetaOf(item));
+  selectApp(appId);
+  const li = categoriesEl.querySelector('.item[data-id="' + item.id + '"]');
+  if (!li) return;
+  li.scrollIntoView({ behavior: "smooth", block: "center" });
+  li.classList.add("flash");
+  setTimeout(() => li.classList.remove("flash"), 1600);
+}
+
 function renderCategories() {
+  renderRecent();
   categoriesEl.innerHTML = "";
   const cats = data[activeApp];
 
@@ -316,7 +473,7 @@ function renderCategories() {
 
   cats.forEach((cat) => {
     const section = document.createElement("section");
-    section.className = "cat";
+    section.className = "cat" + (cat.pinned ? " pinned" : "");
     const isCollapsed = !!collapsedCats[cat.id];
     if (isCollapsed) section.classList.add("is-collapsed");
 
@@ -329,7 +486,7 @@ function renderCategories() {
     const head = document.createElement("div");
     head.className = "cat-head";
     head.addEventListener("click", () => {
-      collapsedCats[cat.id] = !collapsedCats[cat.id];
+      setCatCollapsed(cat.id, !collapsedCats[cat.id]);
       renderCategories();
     });
 
@@ -360,6 +517,7 @@ function renderCategories() {
       e.stopPropagation();
       if (cat.items.length && !confirm(`Izbrišem kategorijo "${cat.name}" z vsemi stvarmi?`)) return;
       data[activeApp] = data[activeApp].filter((c) => c.id !== cat.id);
+      forgetCatUi(cat.id);
       saveData();
       renderCategories();
     });
@@ -367,7 +525,16 @@ function renderCategories() {
     const headRight = document.createElement("div");
     headRight.className = "cat-head-right";
     headRight.appendChild(count);
-    headRight.appendChild(delBtn);
+    if (cat.pinned) {
+      // Pripeta "Aktualno" se ne briše — namesto koša ikona žebljička.
+      const pin = document.createElement("span");
+      pin.className = "pin-mark";
+      pin.title = "Pripeto na vrh";
+      pin.appendChild(svgEl(PIN_ICON));
+      headRight.appendChild(pin);
+    } else {
+      headRight.appendChild(delBtn);
+    }
 
     // ---- zavihki po nujnosti (nujno / splošno / mogoče) ----
     // Del iste glave (ne ločena vrstica) — na namizju pristanejo sredinsko
@@ -378,7 +545,7 @@ function renderCategories() {
     const active = activeTab[cat.id] || "splosno";
 
     PRIORITETE.forEach((p) => {
-      const n = cat.items.filter((i) => prioritetaOf(i) === p.id).length;
+      const n = cat.items.filter((i) => prioritetaOf(i) === p.id && !isArchived(i)).length;
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -405,7 +572,7 @@ function renderCategories() {
 
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        activeTab[cat.id] = p.id;
+        setActiveTab(cat.id, p.id);
         renderCategories();
       });
 
@@ -420,7 +587,7 @@ function renderCategories() {
 
     if (!isCollapsed) {
       // ---- seznam stvari (samo za izbrani zavihek nujnosti) ----
-      const shown = cat.items.filter((i) => prioritetaOf(i) === active);
+      const shown = cat.items.filter((i) => prioritetaOf(i) === active && !isArchived(i));
 
       if (shown.length) {
         const ul = document.createElement("ul");
@@ -431,6 +598,7 @@ function renderCategories() {
 
           const li = document.createElement("li");
           li.className = "item" + (item.done ? " done" : "") + (editing ? " editing" : "");
+          li.dataset.id = item.id;
 
           // Ko urejamo besedilo, je ovojnica <div> namesto <label> — <label>
           // okrog checkboxa bi klik kamorkoli (tudi v vnosno polje) preusmeril
@@ -444,6 +612,8 @@ function renderCategories() {
           checkbox.checked = item.done;
           checkbox.addEventListener("change", () => {
             item.done = checkbox.checked;
+            if (item.done) item.doneAt = Date.now();
+            else delete item.doneAt;
             saveData();
             renderCategories();
           });
@@ -539,6 +709,76 @@ function renderCategories() {
         section.appendChild(hint);
       }
 
+      // ---- arhiv opravljenih (vse nujnosti skupaj) ----
+      const archived = cat.items.filter(isArchived)
+        .sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+
+      if (archived.length) {
+        const archOpen = !!openArchive[cat.id];
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "archive-toggle" + (archOpen ? " open" : "");
+        toggle.appendChild(svgEl(`<path d="m9 18 6-6-6-6"/>`));
+        toggle.appendChild(document.createTextNode(`Opravljeno (${archived.length})`));
+        toggle.addEventListener("click", () => {
+          setArchiveOpen(cat.id, !archOpen);
+          renderCategories();
+        });
+        section.appendChild(toggle);
+
+        if (archOpen) {
+          const archUl = document.createElement("ul");
+          archUl.className = "archive-list";
+
+          archived.forEach((item) => {
+            const li = document.createElement("li");
+            li.className = "archive-item";
+
+            const text = document.createElement("span");
+            text.className = "archive-text";
+            text.textContent = item.text;
+
+            const date = document.createElement("span");
+            date.className = "archive-date";
+            date.textContent = item.doneAt ? new Date(item.doneAt).toLocaleDateString("sl-SI") : "—";
+
+            const restore = document.createElement("button");
+            restore.type = "button";
+            restore.className = "item-copy";
+            restore.title = "Vrni med neopravljene";
+            restore.setAttribute("aria-label", "Vrni med neopravljene");
+            restore.appendChild(svgEl(`<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>`));
+            restore.addEventListener("click", () => {
+              item.done = false;
+              delete item.doneAt;
+              saveData();
+              renderCategories();
+            });
+
+            const del = document.createElement("button");
+            del.type = "button";
+            del.className = "item-del";
+            del.title = "Izbriši";
+            del.setAttribute("aria-label", "Izbriši stvar");
+            del.appendChild(svgEl(TRASH_ICON));
+            del.addEventListener("click", () => {
+              cat.items = cat.items.filter((i) => i.id !== item.id);
+              saveData();
+              renderCategories();
+            });
+
+            li.appendChild(text);
+            li.appendChild(date);
+            li.appendChild(restore);
+            li.appendChild(del);
+            archUl.appendChild(li);
+          });
+
+          section.appendChild(archUl);
+        }
+      }
+
       // ---- dodajanje stvari (gre v trenutno izbrani zavihek nujnosti) ----
       const addForm = document.createElement("form");
       addForm.className = "add-item-form";
@@ -558,7 +798,7 @@ function renderCategories() {
         e.preventDefault();
         const text = addInput.value.trim();
         if (!text) return;
-        cat.items.push({ id: uid(), text, done: false, prioriteta: active });
+        cat.items.push({ id: uid(), text, done: false, prioriteta: active, created: Date.now() });
         saveData();
         addInput.value = "";
         // Po izrisu vrni fokus v isto vnosno polje, da lahko z Enter dodajaš
@@ -598,14 +838,41 @@ function renderCategories() {
   }
 }
 
-addCatForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const name = addCatInput.value.trim();
-  if (!name) return;
+function addCategory(name) {
+  name = name.trim();
+  if (!name) return false;
   data[activeApp].push({ id: uid(), name, items: [] });
   saveData();
-  addCatInput.value = "";
   renderCategories();
+  return true;
+}
+
+addCatForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (addCategory(addCatInput.value)) addCatInput.value = "";
+});
+
+// Telefon: gumb "+ Kategorija" v glavi odpre okno za vnos (vnosno polje
+// pod glavo je tam skrito, glej style.css).
+const addCatDialog = document.getElementById("addCatDialog");
+const addCatDialogInput = document.getElementById("addCatDialogInput");
+
+document.getElementById("addCatHeadBtn").addEventListener("click", () => {
+  addCatDialogInput.value = "";
+  addCatDialog.showModal();
+  addCatDialogInput.focus();
+});
+
+document.getElementById("addCatDialogForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (addCategory(addCatDialogInput.value)) addCatDialog.close();
+});
+
+document.getElementById("addCatDialogCancel").addEventListener("click", () => addCatDialog.close());
+
+// Klik na zatemnjeno ozadje (izven okna) zapre okno.
+addCatDialog.addEventListener("click", (e) => {
+  if (e.target === addCatDialog) addCatDialog.close();
 });
 
 // -------------------------------------------------------------- trd reset
@@ -634,47 +901,47 @@ hardResetBtn.addEventListener("click", () => {
     .then(reloadFresh);
 });
 
-// -------- Drsenje zavihkov levo/desno --------
+// -------- Drsenje zavihkov (in traku "Nazadnje dodano") levo/desno --------
 // Telefon: overflow-x: auto poskrbi za naravno drsenje s prstom.
 // Desktop: z miško lahko pritisneš in povlečeš trak, kolešček pa ga premika
 // vodoravno (tudi navpični zdrs).
-function setupTabScroll() {
+function setupDragScroll(el) {
   let down = false, moved = false, startX = 0, startScroll = 0;
 
-  const overflowing = () => tabsEl.scrollWidth > tabsEl.clientWidth + 1;
-  const paintGrab = () => tabsEl.classList.toggle("grabbable", overflowing());
+  const overflowing = () => el.scrollWidth > el.clientWidth + 1;
+  const paintGrab = () => el.classList.toggle("grabbable", overflowing());
   paintGrab();
   window.addEventListener("resize", paintGrab);
-  new MutationObserver(paintGrab).observe(tabsEl, { childList: true });
+  new MutationObserver(paintGrab).observe(el, { childList: true });
 
-  tabsEl.addEventListener("pointerdown", (e) => {
+  el.addEventListener("pointerdown", (e) => {
     if (e.pointerType !== "mouse" || e.button !== 0 || !overflowing()) return;
     down = true;
     moved = false;
     startX = e.clientX;
-    startScroll = tabsEl.scrollLeft;
+    startScroll = el.scrollLeft;
   });
 
-  tabsEl.addEventListener("pointermove", (e) => {
+  el.addEventListener("pointermove", (e) => {
     if (!down) return;
     const dx = e.clientX - startX;
     if (!moved && Math.abs(dx) > 5) {
       moved = true;
-      tabsEl.classList.add("dragging");
-      tabsEl.setPointerCapture(e.pointerId);
+      el.classList.add("dragging");
+      el.setPointerCapture(e.pointerId);
     }
-    if (moved) tabsEl.scrollLeft = startScroll - dx;
+    if (moved) el.scrollLeft = startScroll - dx;
   });
 
   const end = () => {
     down = false;
-    tabsEl.classList.remove("dragging");
+    el.classList.remove("dragging");
   };
-  tabsEl.addEventListener("pointerup", end);
-  tabsEl.addEventListener("pointercancel", end);
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
 
   // Po vlečenju prepreči, da bi se sprožil klik na zavihek pod kazalcem.
-  tabsEl.addEventListener("click", (e) => {
+  el.addEventListener("click", (e) => {
     if (!moved) return;
     e.preventDefault();
     e.stopPropagation();
@@ -682,16 +949,24 @@ function setupTabScroll() {
   }, true);
 
   // Navpični kolešček -> vodoravno drsenje.
-  tabsEl.addEventListener("wheel", (e) => {
+  el.addEventListener("wheel", (e) => {
     if (!overflowing() || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-    tabsEl.scrollLeft += e.deltaY;
+    el.scrollLeft += e.deltaY;
     e.preventDefault();
   }, { passive: false });
 }
-setupTabScroll();
+setupDragScroll(tabsEl);
+setupDragScroll(recentStripEl);
 
 renderTabs();
 renderPanel();
+
+// Ob vrnitvi v aplikacijo (npr. naslednji dan) pospravi stvari, ki so bile
+// opravljene pred več kot dnevom — brez tega bi ostale vidne do naslednjega
+// izrisa. Med urejanjem ne, da ne izgubimo vnosa.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && !editingItem) renderCategories();
+});
 
 // -------------------------------------------------------------------- sync
 const syncBtn = document.getElementById("syncBtn");
@@ -706,7 +981,9 @@ if (window.Sync) {
     const healed = healData(JSON.parse(JSON.stringify(remote || {})));
     return APPS.every((app) => {
       const cats = healed[app.id];
-      return cats.length === 1 && cats[0].items.length === 0;
+      // Pripeto "Aktualno" doda healData vedno — ne šteje kot vsebina.
+      const rest = cats.filter((c) => !c.pinned);
+      return !cats[0].items.length && rest.length === 1 && rest[0].items.length === 0;
     });
   };
 
