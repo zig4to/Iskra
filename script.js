@@ -5,6 +5,14 @@ const STORAGE_KEY = "iskra-data-v1";
 
 const APPS = [
   {
+    id: "cekar",
+    created: "2026-11-01",
+    name: "Cekar",
+    url: "https://cekar.vercel.app/",
+    accent: ["#16a34a", "#0d9488"],
+    icon: `<path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/>`
+  },
+  {
     id: "checkliste",
     created: "2026-07-25",
     name: "Checkliste",
