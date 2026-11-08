@@ -5,6 +5,14 @@ const STORAGE_KEY = "iskra-data-v1";
 
 const APPS = [
   {
+    id: "bingo",
+    created: "2026-11-08",
+    name: "Bingo",
+    url: "https://bingo-zig4to.vercel.app/",
+    accent: ["#f97316", "#dc2626"],
+    icon: `<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>`
+  },
+  {
     id: "cekar",
     created: "2026-11-01",
     name: "Cekar",
