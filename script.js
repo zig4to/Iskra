@@ -95,7 +95,7 @@ const APPS = [
   {
     id: "tomsstudios",
     created: "2026-08-24T19:23",
-    name: "TomStudios",
+    name: "Bitneverse",
     url: "https://zig4to.github.io/TomsStudios/",
     accent: ["#0ea5e9", "#6366f1"],
     icon: `<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>`
